@@ -1,0 +1,4 @@
+; $Id$
+name = Facebook
+description = Facebook Information for University
+core = 7.x

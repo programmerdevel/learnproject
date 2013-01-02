@@ -1,0 +1,65 @@
+<?php
+
+function facebookinfo_block_info() {
+  $block = array();
+  $block[0]['info'] = t('Facebook Basic Information');
+  return $block;
+}
+
+function facebookinfo_block_view($delta = '') {
+  switch ($delta) {
+    case 0:
+      return array(
+          'content' => get_basic_info()
+      );
+      break;
+  }
+}
+
+function get_basic_info() {
+  if (arg(0) == 'node' && is_numeric(arg(1))) $nodeid = arg(1);
+  $node = node_load($nodeid);
+  
+  if(!isset($node->field_facebook_link['und'][0]['value']) || empty($node->field_facebook_link['und'][0]['value'])){
+    return '';
+  }
+  
+  $fb_url = $node->field_facebook_link['und'][0]['value'];
+  if(preg_match('@id=(.+)$@msi', $fb_url, $id_match)){
+    $id = $id_match[1];
+  }
+  else {
+    $id = basename($fb_url);
+  }
+  
+  $facebook_graph_api_url = 'http://graph.facebook.com/'.$id.'?fields=cover,description,picture,likes';
+  $response = drupal_http_request($facebook_graph_api_url);
+  
+  $data = json_decode($response->data);
+  
+  $fbInfo = array(
+      'description' => isset($data->description)?$data->description:NULL,
+      'likes' => isset($data->likes)?$data->likes:NULL,
+      'cover' => isset($data->cover->source)?$data->cover->source:NULL,
+      'picture' => isset($data->picture->data->url)?$data->picture->data->url:NULL
+  );
+  
+  $content = '';
+  if(!empty($fbInfo['description'])){
+    $content .= '<p><b>Description: </b>'.$fbInfo['description'].'</p>';
+  }
+  
+  if(!empty($fbInfo['likes'])){
+    $content .= '<p><b>Like:</b> '.$fbInfo['likes'].'</p>';
+  }
+   
+  if(!empty($fbInfo['cover'])){
+    $content .= '<p><img src="'.$fbInfo['cover'].'"></p>'; 
+  }
+  
+  if(!empty($fbInfo['picture'])){
+    $content .= '<p><img src="'.$fbInfo['picture'].'"></p>';
+  }
+  
+  return $content;
+}

@@ -1,0 +1,4 @@
+; $Id$
+name = Search Forms
+description = Search Forms
+core = 7.x
